@@ -75,6 +75,26 @@ pnpm dev               # or: pnpm build && node build
 With Docker, `docker compose up -d` builds the image. Data goes to the `data` volume, and
 the compose file mounts `/var/run/docker.sock` read-only for Docker monitors.
 
+Prebuilt multi-arch images (amd64, arm64) are published to GHCR:
+
+```sh
+docker run -d -p 3000:3000 -v statty-data:/data \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -e ORIGIN=https://status.example.com \
+  ghcr.io/kellojo/statty:latest
+```
+
+### Image tags and releases
+
+| Tag                         | Published when                                                       |
+| --------------------------- | -------------------------------------------------------------------- |
+| `:latest`, `:0.1.0`, `:0.1` | a version tag is pushed (`git tag v0.1.0 && git push origin v0.1.0`) |
+| `:edge`                     | every push to `main`                                                 |
+| `:sha-<commit>`             | every build                                                          |
+
+The workflow is `.github/workflows/docker-image.yml`. On a tag it also sets `package.json`'s
+version, so the version shown in the app matches the image.
+
 ### Configuration
 
 | Variable                                              | Default                                                                   | Notes                                                                        |
