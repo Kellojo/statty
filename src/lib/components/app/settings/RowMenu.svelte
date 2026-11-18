@@ -1,0 +1,73 @@
+<script lang="ts" module>
+	import type { Component } from 'svelte';
+
+	export type RowMenuItem =
+		| {
+				label: string;
+				onSelect: () => void;
+				icon?: Component<{ class?: string }>;
+				destructive?: boolean;
+				disabled?: boolean;
+		  }
+		| 'separator';
+</script>
+
+<script lang="ts">
+	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
+	import EllipsisIcon from '@lucide/svelte/icons/ellipsis';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+
+	let {
+		label,
+		items,
+		text
+	}: {
+		/** Names the row, e.g. "Actions for OpenAI". */
+		label: string;
+		items: RowMenuItem[];
+		/** Visible trigger text, for menus that act on a whole section rather than one row. */
+		text?: string;
+	} = $props();
+</script>
+
+<DropdownMenu.Root>
+	<DropdownMenu.Trigger>
+		{#snippet child({ props })}
+			{#if text}
+				<Button {...props} variant="ghost" size="sm" class="relative" aria-label={label}>
+					{text}
+					<ChevronDownIcon class="size-4" />
+				</Button>
+			{:else}
+				<Button
+					{...props}
+					variant="ghost"
+					size="icon-sm"
+					class="relative"
+					title="More actions"
+					aria-label={label}
+				>
+					<EllipsisIcon class="size-4" />
+				</Button>
+			{/if}
+		{/snippet}
+	</DropdownMenu.Trigger>
+	<!-- Labels never wrap: "Sign out everywhere" on two lines looks broken. -->
+	<DropdownMenu.Content align="end" class="min-w-48 whitespace-nowrap">
+		{#each items as item, i (i)}
+			{#if item === 'separator'}
+				<DropdownMenu.Separator />
+			{:else}
+				<DropdownMenu.Item
+					variant={item.destructive ? 'destructive' : 'default'}
+					disabled={item.disabled}
+					onclick={item.onSelect}
+				>
+					{#if item.icon}<item.icon class="size-4" />{/if}
+					{item.label}
+				</DropdownMenu.Item>
+			{/if}
+		{/each}
+	</DropdownMenu.Content>
+</DropdownMenu.Root>

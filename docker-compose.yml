@@ -1,0 +1,14 @@
+services:
+  statty:
+    build: .
+    ports:
+      - '3000:3000'
+    env_file: .env
+    volumes:
+      - data:/data
+      # For Docker monitors. Read-only is enough: Statty only inspects containers.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+
+volumes:
+  data:

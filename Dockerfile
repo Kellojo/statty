@@ -1,0 +1,33 @@
+# syntax=docker/dockerfile:1
+
+FROM node:24-slim AS deps
+WORKDIR /app
+RUN corepack enable pnpm
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+RUN pnpm install --frozen-lockfile
+
+FROM --platform=$BUILDPLATFORM node:24-slim AS build
+WORKDIR /app
+RUN corepack enable pnpm
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+RUN pnpm install --frozen-lockfile
+COPY . .
+RUN pnpm build
+
+FROM node:24-slim AS runtime
+WORKDIR /app
+ENV NODE_ENV=production \
+    DATABASE_PATH=/data/statty.db
+RUN corepack enable pnpm
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY --from=deps /app/node_modules ./node_modules
+RUN pnpm prune --prod
+COPY --from=build /app/build ./build
+COPY migrations ./migrations
+RUN mkdir -p /data
+VOLUME ["/data"]
+EXPOSE 3000
+# Runs as root by default so it can read a mounted /var/run/docker.sock for Docker monitors.
+# Without Docker monitors, run with `--user node` (and a /data volume it owns).
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "build"]
