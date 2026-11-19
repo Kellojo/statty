@@ -19,6 +19,8 @@ shadcn-svelte, better-sqlite3 and better-auth.
     failing monitor stays pending until it has failed `retries + 1` times in a row.
   - **Dashboard:** status, 24h/7d/30d uptime, a response-time chart and a list of status
     changes.
+  - **Config as code:** declare monitors in a YAML [monitors file](#monitors-file). Statty
+    applies it on startup and whenever it changes, with no sync job needed.
   - **Site icons:** HTTP monitors show their site's favicon on the dashboard, the detail page
     and the status page. It is fetched in the background: the home page's `icon` /
     `apple-touch-icon` links (SVG or a square PNG of 32px or more preferred), else
@@ -97,18 +99,86 @@ version, so the version shown in the app matches the image.
 
 ### Configuration
 
-| Variable                                              | Default                                                                   | Notes                                                                        |
-| ----------------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `ORIGIN`                                              | request origin                                                            | Public URL; OAuth and notification links use it (else `localhost:$PORT`)     |
-| `APP_SECRET`                                          | generated into `<db dir>/.secret`                                         | Signs sessions and encrypts stored secrets (e.g. Gotify tokens)              |
-| `DATABASE_PATH`                                       | `./data/statty.db`                                                        |                                                                              |
-| `ENABLE_SIGNUP` / `ENABLE_PASSWORD_LOGIN`             | `true`                                                                    |                                                                              |
-| `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` | –                                                                         | Callback URL: `<ORIGIN>/api/auth/oauth2/callback/oidc`                       |
-| `OIDC_SCOPES`                                         | `openid profile email`                                                    |                                                                              |
-| `OIDC_ONLY`                                           | `false`                                                                   | Turns off password login and sign-up                                         |
-| `AUTO_PROMOTE_FIRST_USER`                             | `true`                                                                    |                                                                              |
-| `DOCKER_HOST`                                         | `unix:///var/run/docker.sock` (Windows: `npipe:////./pipe/docker_engine`) | Also `tcp://host:2375`, `https://host:2376`. A monitor can set its own host. |
-| `HEARTBEAT_RETENTION_DAYS`                            | `90`                                                                      | Older checks are pruned hourly                                               |
+| Variable                                              | Default                                                                   | Notes                                                                              |
+| ----------------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `ORIGIN`                                              | request origin                                                            | Public URL; OAuth and notification links use it (else `localhost:$PORT`)           |
+| `APP_SECRET`                                          | generated into `<db dir>/.secret`                                         | Signs sessions and encrypts stored secrets (e.g. Gotify tokens)                    |
+| `DATABASE_PATH`                                       | `./data/statty.db`                                                        |                                                                                    |
+| `ENABLE_SIGNUP` / `ENABLE_PASSWORD_LOGIN`             | `true`                                                                    |                                                                                    |
+| `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` | –                                                                         | Callback URL: `<ORIGIN>/api/auth/oauth2/callback/oidc`                             |
+| `OIDC_SCOPES`                                         | `openid profile email`                                                    |                                                                                    |
+| `OIDC_ONLY`                                           | `false`                                                                   | Turns off password login and sign-up                                               |
+| `AUTO_PROMOTE_FIRST_USER`                             | `true`                                                                    |                                                                                    |
+| `DOCKER_HOST`                                         | `unix:///var/run/docker.sock` (Windows: `npipe:////./pipe/docker_engine`) | Also `tcp://host:2375`, `https://host:2376`. A monitor can set its own host.       |
+| `HEARTBEAT_RETENTION_DAYS`                            | `90`                                                                      | Older checks are pruned hourly                                                     |
+| `MONITORS_FILE`                                       | –                                                                         | YAML file declaring monitors, applied on startup ([Monitors file](#monitors-file)) |
+| `MONITORS_FILE_POLL_SECONDS`                          | `30`                                                                      | How often to re-read `MONITORS_FILE` for changes; `0` reads it on startup only     |
+
+## Monitors file
+
+Instead of clicking monitors together, you can declare them in a YAML file. Statty applies
+it on startup and again whenever the file changes (it re-reads the file every
+`MONITORS_FILE_POLL_SECONDS`). No sync job or API key is needed. The format is the same as
+[statty-sync-action](https://github.com/Kellojo/statty-sync-action), so a file works with
+both.
+
+```yaml
+# statty.yaml
+prune: true # delete monitors that are removed from this file (default)
+statusPage: # optional
+  title: Acme Status
+  description: Live status of our services.
+monitors:
+  - name: Website
+    type: http
+    url: https://example.com
+    intervalSeconds: 60
+    retries: 2
+  - name: postgres
+    type: docker
+    container: postgres
+    public: false # not on the public status page
+  - name: API
+    type: http
+    url: https://api.example.com/health
+    keyword: '"status":"ok"'
+    description: ${API_REGION} region # from the environment
+```
+
+Each entry takes the [monitor fields](#api): `name` and `type` are required, plus `url`
+for `http` monitors or `container` for `docker` monitors.
+
+- **Matching:** monitors are matched by name, ignoring case, so names must be unique.
+- **Only the fields you set are managed.** A field you leave out gets Statty's default on
+  create, and is never changed afterwards. If someone edits a field the file sets in the
+  UI, it is set back the next time the file is applied.
+- **Adopting:** a monitor made in the UI with the same name as an entry is taken over by
+  the file.
+- **Deleting:** with `prune: true`, a monitor that the file declared is deleted once you
+  remove it from the file, along with its history. Monitors made in the UI or API are
+  never deleted. With `prune: false`, removed monitors just go back to being managed in
+  the UI.
+- **Renaming** an entry creates a new monitor; with `prune` the old one is deleted.
+- **Errors:** a file with any error (unknown fields, a missing `url`, invalid YAML) is not
+  applied at all, so a typo can't delete monitors. Problems are logged.
+- **Environment variables:** `${NAME}` is replaced with the environment variable `NAME`,
+  and the file is refused when it isn't set. `$${NAME}` stays a literal `${NAME}`.
+- Monitors from the file are labelled "From config file" in the app.
+
+With Docker, mount the file's **directory**, not the file itself. A single-file bind mount
+keeps showing the old file after an editor or deploy script replaces it.
+
+```yaml
+services:
+  statty:
+    image: ghcr.io/kellojo/statty:latest
+    environment:
+      MONITORS_FILE: /config/statty.yaml
+    volumes:
+      - ./data:/data
+      - ./config:/config:ro # contains statty.yaml
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+```
 
 ## API
 
@@ -149,6 +219,7 @@ served without sign-in. Other monitors need a session or `status:read`. The sche
   the schema, add the next file; don't edit an applied one.
 - Server code lives in `src/lib/server/`:
   - `monitor/`: checks, scheduler and the service layer
+  - `monitor-file/`: the monitors file (parsing, applying, watching)
   - `favicon/`: finding, validating and caching site icons
   - `notifications/`: notification channels. Each type is a driver; Gotify is in `gotify.ts`
   - `mcp/`: the MCP server

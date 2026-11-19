@@ -23,7 +23,11 @@ const schema = z.object({
 	APP_SECRET: z.string().min(16).optional(),
 	// The Docker Engine API for docker monitors (a monitor can name its own host).
 	DOCKER_HOST: z.string().default(defaultDockerHost),
-	HEARTBEAT_RETENTION_DAYS: z.coerce.number().int().min(1).default(90)
+	HEARTBEAT_RETENTION_DAYS: z.coerce.number().int().min(1).default(90),
+	// A YAML file declaring monitors (and optionally the status page), applied on startup.
+	MONITORS_FILE: z.string().min(1).optional(),
+	// How often to look for changes to MONITORS_FILE, in seconds; 0 applies it on startup only.
+	MONITORS_FILE_POLL_SECONDS: z.coerce.number().int().min(0).default(30)
 });
 
 export type Config = z.infer<typeof schema>;

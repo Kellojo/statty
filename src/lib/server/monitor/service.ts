@@ -25,27 +25,34 @@ async function checkBriefly(id: string): Promise<void> {
 	]);
 }
 
+/** `waitForCheck: false` returns at once; the scheduler checks the monitor on its next tick. */
+interface ChangeOptions {
+	waitForCheck?: boolean;
+}
+
 export async function addMonitor(
 	input: MonitorCreateInput,
-	userId: string | null
+	userId: string | null,
+	{ waitForCheck = true }: ChangeOptions = {}
 ): Promise<MonitorSummary> {
 	const monitor = createMonitor(getDb(), input, userId);
 	publishChange(monitor.id);
 	ensureFavicon(monitor);
-	if (monitor.enabled) await checkBriefly(monitor.id);
+	if (monitor.enabled && waitForCheck) await checkBriefly(monitor.id);
 	return getMonitorSummary(getDb(), monitor.id)!;
 }
 
 export async function editMonitor(
 	id: string,
-	input: MonitorUpdateInput
+	input: MonitorUpdateInput,
+	{ waitForCheck = true }: ChangeOptions = {}
 ): Promise<MonitorSummary | undefined> {
 	const before = getMonitor(getDb(), id);
 	const monitor = updateMonitor(getDb(), id, input);
 	if (!monitor) return undefined;
 	publishChange(id);
 	if (monitor.url !== before?.url || monitor.type !== before?.type) ensureFavicon(monitor);
-	if (monitor.enabled && monitor.lastCheckedAt === null) await checkBriefly(id);
+	if (monitor.enabled && monitor.lastCheckedAt === null && waitForCheck) await checkBriefly(id);
 	return getMonitorSummary(getDb(), id);
 }
 

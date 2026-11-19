@@ -140,6 +140,13 @@
 		{#if !m.public}<Badge variant="outline" class="font-normal text-muted-foreground">
 				Private
 			</Badge>{/if}
+		{#if m.managedByConfig}<Badge
+				variant="outline"
+				class="font-normal text-muted-foreground"
+				title="Declared in the monitors file. Fields the file sets are restored when it changes or Statty restarts."
+			>
+				From config file
+			</Badge>{/if}
 	{/snippet}
 	{#snippet description()}
 		{#if m.type === 'http' && m.url}

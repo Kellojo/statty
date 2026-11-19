@@ -70,6 +70,8 @@ export interface Monitor {
 	updatedAt: number;
 	/** The site's icon (same origin, versioned); null for Docker monitors or when none was found. */
 	faviconUrl: string | null;
+	/** Declared in the monitors file (MONITORS_FILE); edits to the fields it sets are undone when the file is applied. */
+	managedByConfig: boolean;
 }
 
 export interface Heartbeat {

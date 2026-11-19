@@ -21,6 +21,7 @@ import { faviconHash, faviconOrigin, faviconPath } from './favicons.js';
 
 interface MonitorRow {
 	id: string;
+	config_managed: number;
 	name: string;
 	description: string | null;
 	type: MonitorType;
@@ -102,7 +103,8 @@ function toMonitor(db: Db, row: MonitorRow): Monitor {
 		lastChangeAt: row.last_change_at,
 		createdAt: row.created_at,
 		updatedAt: row.updated_at,
-		faviconUrl: faviconUrl(db, row)
+		faviconUrl: faviconUrl(db, row),
+		managedByConfig: row.config_managed === 1
 	};
 }
 
@@ -464,4 +466,20 @@ export function listPublicMonitors(db: Db, days = 90, now = Date.now()): PublicM
 /** Drops checks older than `days` days. */
 export function pruneHeartbeats(db: Db, days: number, now = Date.now()): number {
 	return db.prepare('DELETE FROM heartbeats WHERE checked_at < ?').run(now - days * DAY_MS).changes;
+}
+
+/** Marks monitors as declared by the monitors file, or no longer declared by it. */
+export function setConfigManaged(db: Db, ids: string[], managed: boolean): void {
+	const stmt = db.prepare('UPDATE monitors SET config_managed = ? WHERE id = ?');
+	db.transaction(() => {
+		for (const id of ids) stmt.run(managed ? 1 : 0, id);
+	})();
+}
+
+/** Ids and names of the monitors the monitors file manages. */
+export function listConfigManaged(db: Db): { id: string; name: string }[] {
+	return db.prepare('SELECT id, name FROM monitors WHERE config_managed = 1').all() as {
+		id: string;
+		name: string;
+	}[];
 }

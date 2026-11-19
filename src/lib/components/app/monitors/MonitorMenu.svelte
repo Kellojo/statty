@@ -84,6 +84,10 @@
 			<Dialog.Description>
 				Its check history goes with it, and it disappears from the status page. This cannot be
 				undone.
+				{#if monitor.managedByConfig}
+					It is declared in the monitors file, so it comes back the next time the file is applied
+					unless you remove it there too.
+				{/if}
 			</Dialog.Description>
 		</Dialog.Header>
 		<Dialog.Footer>

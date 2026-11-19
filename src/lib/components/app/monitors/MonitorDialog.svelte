@@ -132,6 +132,12 @@
 				Check a URL's response or a Docker container's state on an interval.
 			</Dialog.Description>
 		</Dialog.Header>
+		{#if monitor?.managedByConfig}
+			<p class="rounded-xl bg-muted px-3 py-2 text-sm text-muted-foreground">
+				This monitor comes from the monitors file. Changes to fields the file sets are undone the
+				next time the file changes or Statty restarts, so edit the file instead.
+			</p>
+		{/if}
 
 		<form id="monitor-form" class="flex flex-col gap-4" onsubmit={submit}>
 			<div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Monitor type">

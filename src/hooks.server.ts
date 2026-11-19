@@ -6,17 +6,20 @@ import { auth } from '$lib/server/auth/index.js';
 import { csrfHandle } from '$lib/server/csrf.js';
 import { closeDb } from '$lib/server/db/index.js';
 import { startScheduler, stopScheduler } from '$lib/server/monitor/scheduler.js';
+import { startMonitorFile, stopMonitorFile } from '$lib/server/monitor-file/index.js';
 
 const shutdown = globalThis as { __stattyShutdownRegistered?: boolean };
 
 if (!building) {
 	startScheduler();
+	startMonitorFile();
 	if (!shutdown.__stattyShutdownRegistered) {
 		shutdown.__stattyShutdownRegistered = true;
 		// adapter-node closes the HTTP server on these signals; stop the checks and the database too.
 		for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 			process.once(signal, () => {
 				stopScheduler();
+				stopMonitorFile();
 				closeDb();
 			});
 		}

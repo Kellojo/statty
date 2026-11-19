@@ -1,0 +1,23 @@
+# Example monitors file. Point MONITORS_FILE at a copy (see "Monitors file" in README.md).
+prune: true
+
+statusPage:
+  title: Service status
+  description: Live status of our services.
+
+monitors:
+  - name: Website
+    type: http
+    url: https://example.com
+    intervalSeconds: 60
+    retries: 2
+
+  - name: API health
+    type: http
+    url: https://api.example.com/health
+    keyword: '"status":"ok"'
+
+  - name: postgres
+    type: docker
+    container: postgres
+    public: false
