@@ -27,7 +27,6 @@
   <a href="https://github.com/Kellojo/statty/pkgs/container/statty"><img alt="Docker image" src="https://img.shields.io/badge/ghcr.io-kellojo%2Fstatty-2496ED?style=flat-square&logo=docker&logoColor=white"></a>
   <img alt="amd64 and arm64" src="https://img.shields.io/badge/arch-amd64%20%7C%20arm64-44403c?style=flat-square">
   <img alt="MCP ready" src="https://img.shields.io/badge/MCP-ready-8b5cf6?style=flat-square">
-  <a href="https://github.com/Kellojo/statty/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/Kellojo/statty?style=flat-square&color=eab308"></a>
 </p>
 
 <br>
@@ -529,15 +528,6 @@ pnpm test    # unit tests
 Bug reports, ideas and pull requests are welcome. [Open an issue](https://github.com/Kellojo/statty/issues/new)
 to report a bug or suggest a feature, and run `pnpm check`, `pnpm lint` and `pnpm test` before
 sending a PR.
-
-<p align="center">
-  <a href="https://star-history.com/#Kellojo/statty&Date">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Kellojo/statty&type=Date&theme=dark">
-      <img alt="Star history chart" src="https://api.star-history.com/svg?repos=Kellojo/statty&type=Date" width="600">
-    </picture>
-  </a>
-</p>
 
 <p align="center">
   <sub>If Statty keeps your services honest, consider giving it a ⭐</sub>
