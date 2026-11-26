@@ -248,7 +248,7 @@ monitor's current state is updated in the same transaction.
 | -------------- | --------------------------------------------------------------------- |
 | 🟢 **Up**      | The last check passed                                                 |
 | 🟠 **Pending** | Failing, but with retries left; or a container that is still starting |
-| 🔴 **Down**    | Failed `retries + 1` times in a row                                   |
+| 🔴 **Down**    | Failed `retries + 1` times in a row (3 by default)                    |
 | ⚪ **Paused**  | Disabled; it isn't checked and doesn't notify                         |
 | ⚫ **Unknown** | Not checked yet                                                       |
 
@@ -428,24 +428,24 @@ Errors come back as `{ "message": "field: problem" }`.
 
 ### Monitor fields
 
-| Field              | Type               | Notes                                                                |
-| ------------------ | ------------------ | -------------------------------------------------------------------- |
-| `name`             | string             | Required. Unique, ignoring case                                      |
-| `type`             | `http` \| `docker` | Required                                                             |
-| `url`              | string             | Required for `http`                                                  |
-| `method`           | string             | `GET` (default), `HEAD`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS` |
-| `acceptedStatuses` | string             | Default `200-299`, e.g. `200-299,301`                                |
-| `keyword`          | string             | Text the response body must contain                                  |
-| `ignoreTls`        | boolean            | Accept invalid or self-signed certificates                           |
-| `container`        | string             | Required for `docker`                                                |
-| `dockerHost`       | string             | Overrides `DOCKER_HOST` for this monitor                             |
-| `intervalSeconds`  | number             | 10–86400, default 60                                                 |
-| `timeoutSeconds`   | number             | At most the interval, default 10                                     |
-| `retries`          | number             | Failures to tolerate before down, default 0                          |
-| `enabled`          | boolean            | `false` pauses the monitor                                           |
-| `public`           | boolean            | Show on the status page, default `true`                              |
-| `description`      | string             |                                                                      |
-| `sortOrder`        | number             |                                                                      |
+| Field              | Type               | Notes                                                                 |
+| ------------------ | ------------------ | --------------------------------------------------------------------- |
+| `name`             | string             | Required. Unique, ignoring case                                       |
+| `type`             | `http` \| `docker` | Required                                                              |
+| `url`              | string             | Required for `http`                                                   |
+| `method`           | string             | `GET` (default), `HEAD`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`  |
+| `acceptedStatuses` | string             | Default `200-299`, e.g. `200-299,301`                                 |
+| `keyword`          | string             | Text the response body must contain                                   |
+| `ignoreTls`        | boolean            | Accept invalid or self-signed certificates                            |
+| `container`        | string             | Required for `docker`                                                 |
+| `dockerHost`       | string             | Overrides `DOCKER_HOST` for this monitor                              |
+| `intervalSeconds`  | number             | 10–86400, default 60                                                  |
+| `timeoutSeconds`   | number             | At most the interval, default 10                                      |
+| `retries`          | number             | Failures to tolerate before down, default 2 (down on the 3rd failure) |
+| `enabled`          | boolean            | `false` pauses the monitor                                            |
+| `public`           | boolean            | Show on the status page, default `true`                               |
+| `description`      | string             |                                                                       |
+| `sortOrder`        | number             |                                                                       |
 
 The schema is in `src/lib/server/monitor/input.ts`. Responses also carry `faviconUrl`, which is
 null for Docker monitors or when no icon was found. It points at

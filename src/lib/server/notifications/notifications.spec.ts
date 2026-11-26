@@ -210,7 +210,13 @@ describe('end to end with a mock Gotify', () => {
 		const db = openDatabase(':memory:');
 		const monitor = createMonitor(
 			db,
-			{ name: 'Billing service', type: 'http', url: `${serviceUrl}/health`, timeoutSeconds: 5 },
+			{
+				name: 'Billing service',
+				type: 'http',
+				url: `${serviceUrl}/health`,
+				timeoutSeconds: 5,
+				retries: 0
+			},
 			null
 		);
 		const channel = createNotificationChannel(db, {

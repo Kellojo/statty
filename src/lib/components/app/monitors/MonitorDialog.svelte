@@ -49,7 +49,7 @@
 	let dockerHost = $state('');
 	let interval = $state('60');
 	let timeoutSeconds = $state(10);
-	let retries = $state(0);
+	let retries = $state(2);
 	let isPublic = $state(true);
 	let enabled = $state(true);
 	let advanced = $state(false);
@@ -72,7 +72,7 @@
 		dockerHost = m?.dockerHost ?? '';
 		interval = String(m?.intervalSeconds ?? 60);
 		timeoutSeconds = m?.timeoutSeconds ?? 10;
-		retries = m?.retries ?? 0;
+		retries = m?.retries ?? 2;
 		isPublic = m?.public ?? true;
 		enabled = m?.enabled ?? true;
 		advanced = false;

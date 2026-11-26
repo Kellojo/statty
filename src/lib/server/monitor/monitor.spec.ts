@@ -102,6 +102,21 @@ describe('monitors repo', () => {
 		expect(statusChanges(db, m.id).map((c) => c.status)).toEqual(['up', 'down', 'pending']);
 	});
 
+	it('goes down after three failed checks in a row by default', () => {
+		const db = fresh();
+		const m = createMonitor(db, { name: 'a', type: 'http', url: 'https://a' }, null);
+		expect(m.retries).toBe(2);
+		const down = { status: 'down' as const, latencyMs: null, message: 'boom' };
+		const up = { status: 'up' as const, latencyMs: 5, message: null };
+		expect(recordCheck(db, m.id, down, 1000)?.status).toBe('pending');
+		expect(recordCheck(db, m.id, down, 2000)?.status).toBe('pending');
+		// A pass in between starts the count again.
+		expect(recordCheck(db, m.id, up, 3000)?.status).toBe('up');
+		expect(recordCheck(db, m.id, down, 4000)?.status).toBe('pending');
+		expect(recordCheck(db, m.id, down, 5000)?.status).toBe('pending');
+		expect(recordCheck(db, m.id, down, 6000)?.status).toBe('down');
+	});
+
 	it('pauses and resets', () => {
 		const db = fresh();
 		const m = createMonitor(db, { name: 'a', type: 'http', url: 'https://a' }, null);
@@ -118,7 +133,7 @@ describe('monitors repo', () => {
 
 	it('computes uptime and public daily buckets', () => {
 		const db = fresh();
-		const m = createMonitor(db, { name: 'a', type: 'http', url: 'https://a' }, null);
+		const m = createMonitor(db, { name: 'a', type: 'http', url: 'https://a', retries: 0 }, null);
 		const now = Date.now();
 		recordCheck(db, m.id, { status: 'up', latencyMs: 1, message: null }, now - 3000);
 		recordCheck(db, m.id, { status: 'up', latencyMs: 1, message: null }, now - 2000);

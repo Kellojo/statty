@@ -50,7 +50,7 @@ export const DEFAULTS: Omit<MonitorFields, 'name' | 'type'> = {
 	dockerHost: null,
 	intervalSeconds: 60,
 	timeoutSeconds: 10,
-	retries: 0,
+	retries: 2,
 	enabled: true,
 	public: true,
 	sortOrder: 0
